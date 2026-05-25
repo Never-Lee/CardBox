@@ -1,10 +1,12 @@
 # Karetní Box
 
-Vite/React prototyp.
+Strukturovaný Vite/React build prototypu karetní hry.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Deploy na Vercel: framework Vite, build command `npm run build`, output `dist`.
+## Experimentální pravidlo
+
+Recovery nyní vrací celý jeden vybraný suit, ne 0–5 jednotlivých karet.
