@@ -18,7 +18,7 @@ export function EventFlash({ event, clear }) {
       initial={{ scale: 0.35, opacity: 0, rotate: isBlock ? -8 : 0 }}
       animate={{ scale: 1.15, opacity: 1, rotate: 0 }}
       transition={{ type: "spring", stiffness: 260, damping: 18 }}
-      className={`damage-popup ${isKO ? "event-box-ko" : ""}`}
+      className={`damage-box ${isKO ? "event-box-ko" : ""}`}
     >
       <div className="damage-label">{isKO ? "💥" : "🥊🥊"}</div>
       <div className={`event-title ${isKO ? "event-title-ko" : ""}`}>
