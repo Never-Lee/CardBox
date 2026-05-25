@@ -92,9 +92,22 @@ export function applyInitiativeSelection(game, pickedCard) {
   if (!firstCard || !secondCard) return game;
 
   let starter = 0;
-  if (initiativeValue(secondCard) > initiativeValue(firstCard)) starter = 1;
-  if (initiativeValue(firstCard) === initiativeValue(secondCard)) starter = Math.random() < 0.5 ? 0 : 1;
 
+if (initiativeValue(secondCard) > initiativeValue(firstCard)) {
+  starter = 1;
+} else if (initiativeValue(firstCard) === initiativeValue(secondCard)) {
+  return withLog(
+    {
+      ...game,
+      selectedInitiative: null,
+      selectedInitiatives: [null, null],
+      initiativePlayer: 0,
+      revealedInitiative: [firstCard, secondCard],
+      phase: "initiative",
+    },
+    `Remíza v iniciativě (${cardLabel(firstCard)} vs ${cardLabel(secondCard)}). Oba hráči vyberou novou kartu.`
+  );
+}
   return finalizeTransition(
     game,
     withLog(
