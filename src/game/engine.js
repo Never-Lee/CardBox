@@ -396,6 +396,25 @@ export function applyPause(game) {
   };
 
   if (base.pausesThisRound >= 3) {
+  if (game.round >= game.maxRounds) {
+    const score0 = players[0].table.length;
+    const score1 = players[1].table.length;
+    const winner =
+      score0 === score1 ? "Remíza" : score0 < score1 ? players[0].name : players[1].name;
+
+    return withLog(
+      {
+        ...base,
+        phase: "finished",
+        winner,
+        recoveryStarter: null,
+        recoveryPlayer: null,
+        selectedRecoverySuit: null,
+      },
+      `Konec zápasu. Skóre: ${score0}:${score1}.`
+    );
+  }
+
     return withLog(
       {
         ...base,
