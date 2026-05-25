@@ -1,5 +1,11 @@
 import { AI_PLAYER, FIGURE_BLOCK, SUITS } from "../game/constants.js";
-import { allValidAttacks, attackDamage, blockValue, canCardBlock, sortCards } from "../game/cards.js";
+import {
+  allValidAttacks,
+  attackDamage,
+  blockValue,
+  canCardBlock,
+  sortCards,
+} from "../game/cards.js";
 
 const FIGURE_RANKS = new Set(["J", "Q", "K", "A"]);
 
@@ -39,19 +45,25 @@ function opponentRecentlySpentFigure(game) {
 }
 
 function bestAttack(attacks) {
-  return [...attacks].sort((a, b) => {
-    const damageDiff = attackDamage(b) - attackDamage(a);
-    if (damageDiff !== 0) return damageDiff;
+  return (
+    [...attacks].sort((a, b) => {
+      const damageDiff = attackDamage(b) - attackDamage(a);
+      if (damageDiff !== 0) return damageDiff;
 
-    const figureDiff = Number(attackSpendsFigure(a)) - Number(attackSpendsFigure(b));
-    if (figureDiff !== 0) return figureDiff;
+      const figureDiff =
+        Number(attackSpendsFigure(a)) - Number(attackSpendsFigure(b));
+      if (figureDiff !== 0) return figureDiff;
 
-    return b.length - a.length;
-  })[0] ?? null;
+      return b.length - a.length;
+    })[0] ?? null
+  );
 }
 
 function cheapestBlock(blocks) {
-  return [...blocks].sort((a, b) => blockValue(a.rank) - blockValue(b.rank))[0] ?? null;
+  return (
+    [...blocks].sort((a, b) => blockValue(a.rank) - blockValue(b.rank))[0] ??
+    null
+  );
 }
 
 function bestBlockForCounterattack(game, blocks) {
@@ -76,9 +88,15 @@ export function aiPickInitiativeCard(hand) {
 
 export function chooseAIMulligan(game) {
   const ai = game.players[AI_PLAYER];
-  const protectedIds = new Set((game.revealedInitiative ?? []).map((card) => card.id));
+  const protectedIds = new Set(
+    (game.revealedInitiative ?? []).map((card) => card.id),
+  );
   const attacks = allValidAttacks(ai.hand, null);
-  const comboCardIds = new Set(attacks.filter(attackIsCombo).flatMap((cards) => cards.map((card) => card.id)));
+  const comboCardIds = new Set(
+    attacks
+      .filter(attackIsCombo)
+      .flatMap((cards) => cards.map((card) => card.id)),
+  );
 
   return ai.hand.filter((card) => {
     if (protectedIds.has(card.id)) return false;
@@ -102,14 +120,17 @@ export function chooseAIAttack(game) {
 
   if (!attacks.length) return null;
 
-  const lethal = attacks.find((cards) => attackDamage(cards) >= enemy.deck.length);
+  const lethal = attacks.find(
+    (cards) => attackDamage(cards) >= enemy.deck.length,
+  );
   if (lethal) return lethal;
 
   if (!hybrid) {
     const pressure = attacks.filter((cards) => {
       const damage = attackDamage(cards);
       if (attackIsJab(cards) && attackSpendsAce(cards)) return false;
-      if (attackSpendsAce(cards) && damage < 12 && enemy.deck.length > 12) return false;
+      if (attackSpendsAce(cards) && damage < 12 && enemy.deck.length > 12)
+        return false;
       if (damage >= 9) return true;
       if (damage >= 6 && enemy.deck.length <= 18) return true;
       return false;
@@ -117,20 +138,26 @@ export function chooseAIAttack(game) {
 
     if (pressure.length) return bestAttack(pressure);
 
-    const nonAceJabs = attacks.filter((cards) => attackIsJab(cards) && cards[0].rank !== "A");
+    const nonAceJabs = attacks.filter(
+      (cards) => attackIsJab(cards) && cards[0].rank !== "A",
+    );
     if (nonAceJabs.length && enemy.deck.length > 10) return nonAceJabs[0];
 
     const safeAttacks = attacks.filter((cards) => !attackSpendsAce(cards));
-    if (safeAttacks.length && ai.hand.length >= 7) return bestAttack(safeAttacks);
+    if (safeAttacks.length && ai.hand.length >= 7)
+      return bestAttack(safeAttacks);
 
     return null;
   }
 
   const combos = attacks.filter(attackIsCombo);
-  const nonFigureJabs = attacks.filter((cards) => attackIsJab(cards) && !attackSpendsFigure(cards));
+  const nonFigureJabs = attacks.filter(
+    (cards) => attackIsJab(cards) && !attackSpendsFigure(cards),
+  );
   const safeCombos = combos.filter((cards) => {
     const damage = attackDamage(cards);
-    if (attackSpendsAce(cards) && damage < 12 && enemy.deck.length > 12) return false;
+    if (attackSpendsAce(cards) && damage < 12 && enemy.deck.length > 12)
+      return false;
     return true;
   });
 
@@ -150,7 +177,9 @@ export function chooseAIAttack(game) {
     return nonFigureJabs[0];
   }
 
-  const nonFigureAttacks = attacks.filter((cards) => !attackSpendsFigure(cards));
+  const nonFigureAttacks = attacks.filter(
+    (cards) => !attackSpendsFigure(cards),
+  );
   if (nonFigureAttacks.length && ai.hand.length >= 7) {
     return bestAttack(nonFigureAttacks);
   }
@@ -163,7 +192,9 @@ export function chooseAIBlock(game) {
   const ai = game.players[AI_PLAYER];
   const attackSize = game.currentAttack.length;
   const damage = attackDamage(game.currentAttack);
-  const possibleBlocks = ai.hand.filter((card) => canCardBlock(card, attackSize));
+  const possibleBlocks = ai.hand.filter((card) =>
+    canCardBlock(card, attackSize),
+  );
 
   if (!possibleBlocks.length) return null;
 
@@ -183,8 +214,12 @@ export function chooseAIBlock(game) {
   }
 
   const counterBlock = bestBlockForCounterattack(game, possibleBlocks);
-  const futureHand = counterBlock ? handWithoutCard(ai.hand, counterBlock) : ai.hand;
-  const futureAttacks = counterBlock ? allValidAttacks(futureHand, counterBlock.color) : [];
+  const futureHand = counterBlock
+    ? handWithoutCard(ai.hand, counterBlock)
+    : ai.hand;
+  const futureAttacks = counterBlock
+    ? allValidAttacks(futureHand, counterBlock.color)
+    : [];
   const hasCounterCombo = futureAttacks.some(attackIsCombo);
 
   const opponentUsedFigureNow = attackSpendsFigure(game.currentAttack);
@@ -192,7 +227,8 @@ export function chooseAIBlock(game) {
 
   if (hasCounterCombo && counterBlock) {
     if (counterBlock.rank === "A") {
-      if (damage >= 12 || ai.deck.length <= 10 || opponentUsedFigureNow) return counterBlock;
+      if (damage >= 12 || ai.deck.length <= 10 || opponentUsedFigureNow)
+        return counterBlock;
       return null;
     }
 
@@ -224,7 +260,8 @@ export function chooseAIRecovery(game) {
     const aces = cards.filter((card) => card.rank === "A");
     const numbers = cards.filter((card) => !isFigure(card));
 
-    let score = cards.length * 2 + figures.length * 5 + aces.length * 4 + numbers.length;
+    let score =
+      cards.length * 2 + figures.length * 5 + aces.length * 4 + numbers.length;
 
     if (game.round >= 5 || ai.deck.length <= 14) {
       score += cards.length * 2;

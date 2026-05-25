@@ -1,1 +1,20 @@
-import{useEffect}from"react";import{motion}from"framer-motion";export function DamageFlash({damage,clear}){useEffect(()=>{const t=setTimeout(clear,850);return()=>clearTimeout(t)},[damage,clear]);return <div className="damage-flash"><motion.div initial={{scale:.4,opacity:0}} animate={{scale:1.25,opacity:1}} className="damage-box"><div className="damage-number">-{damage}</div><div className="damage-label">DAMAGE</div></motion.div></div>}
+import { useEffect } from "react";
+import { motion } from "framer-motion";
+export function DamageFlash({ damage, clear }) {
+  useEffect(() => {
+    const t = setTimeout(clear, 850);
+    return () => clearTimeout(t);
+  }, [damage, clear]);
+  return (
+    <div className="damage-flash">
+      <motion.div
+        initial={{ scale: 0.4, opacity: 0 }}
+        animate={{ scale: 1.25, opacity: 1 }}
+        className="damage-box"
+      >
+        <div className="damage-number">-{damage}</div>
+        <div className="damage-label">DAMAGE</div>
+      </motion.div>
+    </div>
+  );
+}

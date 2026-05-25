@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { AI_PLAYER, FIGURE_BLOCK } from "./game/constants.js";
-import { attackColor, canCardBlock, isValidStraight, sortCards } from "./game/cards.js";
+import {
+  attackColor,
+  canCardBlock,
+  isValidStraight,
+  sortCards,
+} from "./game/cards.js";
 import {
   applyAttack,
   applyBlock,
@@ -13,7 +18,12 @@ import {
   initialGame,
   withLog,
 } from "./game/engine.js";
-import { chooseAIAttack, chooseAIBlock, chooseAIMulligan, chooseAIRecovery } from "./ai/ai.js";
+import {
+  chooseAIAttack,
+  chooseAIBlock,
+  chooseAIMulligan,
+  chooseAIRecovery,
+} from "./ai/ai.js";
 import { Actions } from "./components/Actions.jsx";
 import { Button } from "./components/Button.jsx";
 import { DamageFlash } from "./components/DamageFlash.jsx";
@@ -44,20 +54,36 @@ export default function App() {
       (game.phase === "mulligan" && game.mulliganPlayer === AI_PLAYER));
 
   const selectedAttackCards = useMemo(
-    () => sortCards(attacker.hand.filter((card) => game.selectedAttack.includes(card.id))),
-    [attacker.hand, game.selectedAttack]
+    () =>
+      sortCards(
+        attacker.hand.filter((card) => game.selectedAttack.includes(card.id)),
+      ),
+    [attacker.hand, game.selectedAttack],
   );
 
   const mulliganPlayer =
-    game.phase === "mulligan" && game.mulliganPlayer !== null ? game.players[game.mulliganPlayer] : null;
+    game.phase === "mulligan" && game.mulliganPlayer !== null
+      ? game.players[game.mulliganPlayer]
+      : null;
 
   const selectedMulliganCards = useMemo(
-    () => (mulliganPlayer ? sortCards(mulliganPlayer.hand.filter((card) => game.selectedMulligan.includes(card.id))) : []),
-    [mulliganPlayer, game.selectedMulligan]
+    () =>
+      mulliganPlayer
+        ? sortCards(
+            mulliganPlayer.hand.filter((card) =>
+              game.selectedMulligan.includes(card.id),
+            ),
+          )
+        : [],
+    [mulliganPlayer, game.selectedMulligan],
   );
 
   function isColorLockedForAttack(card) {
-    return game.phase === "attack" && game.lastAttackColor && card.color === game.lastAttackColor;
+    return (
+      game.phase === "attack" &&
+      game.lastAttackColor &&
+      card.color === game.lastAttackColor
+    );
   }
 
   function wouldBeValidAttackSelection(card) {
@@ -81,19 +107,31 @@ export default function App() {
 
   function blockCardState(card) {
     if (game.phase !== "block") return "inactive";
-    return canCardBlock(card, game.currentAttack?.length ?? 0) ? "active" : "locked";
+    return canCardBlock(card, game.currentAttack?.length ?? 0)
+      ? "active"
+      : "locked";
   }
 
   function mulliganCardState(card) {
     if (game.phase !== "mulligan") return "inactive";
-    const protectedIds = new Set((game.revealedInitiative ?? []).map((c) => c.id));
+    const protectedIds = new Set(
+      (game.revealedInitiative ?? []).map((c) => c.id),
+    );
     if (protectedIds.has(card.id)) return "locked";
     return game.selectedMulligan.includes(card.id) ? "selected" : "active";
   }
 
-  const attackValid = selectedAttackCards.length > 0 && isValidStraight(selectedAttackCards);
-  const respectsAlternation = !game.lastAttackColor || attackColor(selectedAttackCards) !== game.lastAttackColor;
-  const canAttack = game.phase === "attack" && attackValid && respectsAlternation && !isAITurn && !game.pendingHandoff;
+  const attackValid =
+    selectedAttackCards.length > 0 && isValidStraight(selectedAttackCards);
+  const respectsAlternation =
+    !game.lastAttackColor ||
+    attackColor(selectedAttackCards) !== game.lastAttackColor;
+  const canAttack =
+    game.phase === "attack" &&
+    attackValid &&
+    respectsAlternation &&
+    !isAITurn &&
+    !game.pendingHandoff;
 
   function startGame(mode) {
     setGameMode(mode);
@@ -109,25 +147,45 @@ export default function App() {
   }
 
   function toggleInitiative(card) {
-    if (game.phase !== "initiative" || game.winner || game.pendingHandoff) return;
+    if (game.phase !== "initiative" || game.winner || game.pendingHandoff)
+      return;
     const picker = game.initiativePlayer ?? 0;
     if (game.viewingPlayer !== picker) return;
-    setGame((g) => ({ ...g, selectedInitiative: g.selectedInitiative === card.id ? null : card.id }));
+    setGame((g) => ({
+      ...g,
+      selectedInitiative: g.selectedInitiative === card.id ? null : card.id,
+    }));
   }
 
   function confirmInitiative() {
-    if (game.phase !== "initiative" || !game.selectedInitiative || game.winner || game.pendingHandoff) return;
+    if (
+      game.phase !== "initiative" ||
+      !game.selectedInitiative ||
+      game.winner ||
+      game.pendingHandoff
+    )
+      return;
     setGame((g) => {
       const picker = g.initiativePlayer ?? 0;
-      const picked = g.players[picker].hand.find((card) => card.id === g.selectedInitiative);
+      const picked = g.players[picker].hand.find(
+        (card) => card.id === g.selectedInitiative,
+      );
       if (!picked) return g;
       return applyInitiativeSelection(g, picked);
     });
   }
 
   function toggleMulligan(card) {
-    if (game.phase !== "mulligan" || game.winner || isAITurn || game.pendingHandoff) return;
-    const protectedIds = new Set((game.revealedInitiative ?? []).map((c) => c.id));
+    if (
+      game.phase !== "mulligan" ||
+      game.winner ||
+      isAITurn ||
+      game.pendingHandoff
+    )
+      return;
+    const protectedIds = new Set(
+      (game.revealedInitiative ?? []).map((c) => c.id),
+    );
     if (protectedIds.has(card.id)) return;
 
     setGame((g) => ({
@@ -139,24 +197,47 @@ export default function App() {
   }
 
   function confirmMulligan() {
-    if (game.phase !== "mulligan" || game.mulliganPlayer === null || game.winner || isAITurn || game.pendingHandoff) return;
+    if (
+      game.phase !== "mulligan" ||
+      game.mulliganPlayer === null ||
+      game.winner ||
+      isAITurn ||
+      game.pendingHandoff
+    )
+      return;
 
     setGame((g) => {
       const player = g.players[g.mulliganPlayer];
-      const chosen = player.hand.filter((card) => g.selectedMulligan.includes(card.id));
+      const chosen = player.hand.filter((card) =>
+        g.selectedMulligan.includes(card.id),
+      );
       return applyMulligan(g, chosen);
     });
   }
 
   function toggleAttack(card) {
-    if (game.phase !== "attack" || game.winner || isAITurn || game.pendingHandoff || isColorLockedForAttack(card)) return;
+    if (
+      game.phase !== "attack" ||
+      game.winner ||
+      isAITurn ||
+      game.pendingHandoff ||
+      isColorLockedForAttack(card)
+    )
+      return;
 
     setGame((g) => {
-      const current = sortCards(g.players[g.attacker].hand.filter((c) => g.selectedAttack.includes(c.id)));
+      const current = sortCards(
+        g.players[g.attacker].hand.filter((c) =>
+          g.selectedAttack.includes(c.id),
+        ),
+      );
       const alreadySelected = g.selectedAttack.includes(card.id);
 
       if (alreadySelected) {
-        return { ...g, selectedAttack: g.selectedAttack.filter((id) => id !== card.id) };
+        return {
+          ...g,
+          selectedAttack: g.selectedAttack.filter((id) => id !== card.id),
+        };
       }
 
       const nextCards = sortCards([...current, card]);
@@ -167,14 +248,33 @@ export default function App() {
   }
 
   function toggleBlock(card) {
-    if (game.phase !== "block" || game.winner || isAITurn || game.pendingHandoff) return;
+    if (
+      game.phase !== "block" ||
+      game.winner ||
+      isAITurn ||
+      game.pendingHandoff
+    )
+      return;
     if (!canCardBlock(card, game.currentAttack?.length ?? 0)) return;
-    setGame((g) => ({ ...g, selectedBlock: g.selectedBlock === card.id ? null : card.id }));
+    setGame((g) => ({
+      ...g,
+      selectedBlock: g.selectedBlock === card.id ? null : card.id,
+    }));
   }
 
   function toggleRecoverySuit(suitId) {
-    if (game.phase !== "recovery" || game.recoveryPlayer === null || game.winner || isAITurn || game.pendingHandoff) return;
-    setGame((g) => ({ ...g, selectedRecoverySuit: g.selectedRecoverySuit === suitId ? null : suitId }));
+    if (
+      game.phase !== "recovery" ||
+      game.recoveryPlayer === null ||
+      game.winner ||
+      isAITurn ||
+      game.pendingHandoff
+    )
+      return;
+    setGame((g) => ({
+      ...g,
+      selectedRecoverySuit: g.selectedRecoverySuit === suitId ? null : suitId,
+    }));
   }
 
   function commitAttack() {
@@ -182,8 +282,15 @@ export default function App() {
     setGame((g) =>
       finalizeTransition(
         g,
-        applyAttack(g, sortCards(g.players[g.attacker].hand.filter((card) => g.selectedAttack.includes(card.id))))
-      )
+        applyAttack(
+          g,
+          sortCards(
+            g.players[g.attacker].hand.filter((card) =>
+              g.selectedAttack.includes(card.id),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -193,9 +300,17 @@ export default function App() {
   }
 
   function commitBlock() {
-    if (game.phase !== "block" || !game.selectedBlock || isAITurn || game.pendingHandoff) return;
+    if (
+      game.phase !== "block" ||
+      !game.selectedBlock ||
+      isAITurn ||
+      game.pendingHandoff
+    )
+      return;
     setGame((g) => {
-      const block = g.players[g.defender].hand.find((card) => card.id === g.selectedBlock);
+      const block = g.players[g.defender].hand.find(
+        (card) => card.id === g.selectedBlock,
+      );
       return block && canCardBlock(block, g.currentAttack?.length ?? 0)
         ? finalizeTransition(g, applyBlock(g, block))
         : withLog(g, "Vybraný blok nestačí na blok.");
@@ -203,13 +318,28 @@ export default function App() {
   }
 
   function pauseTurn() {
-    if (game.phase !== "attack" || game.winner || isAITurn || game.pendingHandoff) return;
+    if (
+      game.phase !== "attack" ||
+      game.winner ||
+      isAITurn ||
+      game.pendingHandoff
+    )
+      return;
     setGame((g) => finalizeTransition(g, applyPause(g)));
   }
 
   function confirmRecovery() {
-    if (game.phase !== "recovery" || game.recoveryPlayer === null || game.winner || isAITurn || game.pendingHandoff) return;
-    setGame((g) => finalizeTransition(g, applyRecovery(g, g.selectedRecoverySuit)));
+    if (
+      game.phase !== "recovery" ||
+      game.recoveryPlayer === null ||
+      game.winner ||
+      isAITurn ||
+      game.pendingHandoff
+    )
+      return;
+    setGame((g) =>
+      finalizeTransition(g, applyRecovery(g, g.selectedRecoverySuit)),
+    );
   }
 
   function runAIOnce(g) {
@@ -238,9 +368,20 @@ export default function App() {
 
   useEffect(() => {
     if (!isAITurn) return;
-    const timeout = setTimeout(() => setGame((g) => finalizeTransition(g, runAIOnce(g))), 650);
+    const timeout = setTimeout(
+      () => setGame((g) => finalizeTransition(g, runAIOnce(g))),
+      650,
+    );
     return () => clearTimeout(timeout);
-  }, [isAITurn, game.phase, game.attacker, game.defender, game.recoveryPlayer, game.mulliganPlayer, game.currentAttack?.length]);
+  }, [
+    isAITurn,
+    game.phase,
+    game.attacker,
+    game.defender,
+    game.recoveryPlayer,
+    game.mulliganPlayer,
+    game.currentAttack?.length,
+  ]);
 
   const currentBlock =
     game.phase === "block" && game.selectedBlock
@@ -248,11 +389,17 @@ export default function App() {
       : null;
 
   const currentAttackSize = game.currentAttack?.length ?? 0;
-  const currentBlockStrength = currentBlock ? FIGURE_BLOCK[currentBlock.rank] : 0;
-  const blockCanStop = Boolean(currentBlock && currentBlockStrength >= currentAttackSize);
+  const currentBlockStrength = currentBlock
+    ? FIGURE_BLOCK[currentBlock.rank]
+    : 0;
+  const blockCanStop = Boolean(
+    currentBlock && currentBlockStrength >= currentAttackSize,
+  );
 
   if (screen === "menu") {
-    return <MainMenu startGame={startGame} showRules={() => setScreen("rules")} />;
+    return (
+      <MainMenu startGame={startGame} showRules={() => setScreen("rules")} />
+    );
   }
 
   if (screen === "rules") {
@@ -263,18 +410,31 @@ export default function App() {
     <div className="app">
       <div className="container">
         {game.damageFlash && (
-          <DamageFlash damage={game.damageFlash} clear={() => setGame((g) => ({ ...g, damageFlash: null }))} />
+          <DamageFlash
+            damage={game.damageFlash}
+            clear={() => setGame((g) => ({ ...g, damageFlash: null }))}
+          />
         )}
 
         {game.eventFlash && (
-          <EventFlash event={game.eventFlash} clear={() => setGame((g) => ({ ...g, eventFlash: null }))} />
+          <EventFlash
+            event={game.eventFlash}
+            clear={() => setGame((g) => ({ ...g, eventFlash: null }))}
+          />
         )}
 
         {game.pendingHandoff && (
           <Panel className="handoff">
             <h2>Předání tahu</h2>
-            <p>Předej zařízení hráči: <b>{game.players[game.viewingPlayer].name}</b>.</p>
-            <Button onClick={() => setGame((g) => ({ ...g, pendingHandoff: false }))}>Převzít tah</Button>
+            <p>
+              Předej zařízení hráči:{" "}
+              <b>{game.players[game.viewingPlayer].name}</b>.
+            </p>
+            <Button
+              onClick={() => setGame((g) => ({ ...g, pendingHandoff: false }))}
+            >
+              Převzít tah
+            </Button>
           </Panel>
         )}
 
@@ -286,19 +446,30 @@ export default function App() {
                 ? game.aiLevel === "hybrid"
                   ? "Proti AI — Zkušený soupeř"
                   : "Proti AI — Sparring partner"
-                : "Hot-seat"} · recovery celého suitu · 6 kol
+                : "Hot-seat"}{" "}
+              · recovery celého suitu · 6 kol
             </p>
           </div>
           <div className="row">
-            <Button onClick={() => setShowLog(true)} variant="ghost">Historie</Button>
-            <Button onClick={() => setScreen("menu")} variant="ghost">Menu</Button>
-            <Button onClick={resetGame} variant="secondary">Nová hra</Button>
+            <Button onClick={() => setShowLog(true)} variant="ghost">
+              Historie
+            </Button>
+            <Button onClick={() => setScreen("menu")} variant="ghost">
+              Menu
+            </Button>
+            <Button onClick={resetGame} variant="secondary">
+              Nová hra
+            </Button>
           </div>
         </div>
 
         {isAITurn && <Panel>AI přemýšlí…</Panel>}
-        {game.winner && <Panel className="result">Výsledek: {game.winner}</Panel>}
-        {showLog && <LogDrawer log={game.log} close={() => setShowLog(false)} />}
+        {game.winner && (
+          <Panel className="result">Výsledek: {game.winner}</Panel>
+        )}
+        {showLog && (
+          <LogDrawer log={game.log} close={() => setShowLog(false)} />
+        )}
 
         <div className="grid3">
           <Status game={game} />
@@ -338,14 +509,19 @@ export default function App() {
                   game.phase === "mulligan" &&
                   idx === (game.mulliganPlayer ?? 0) &&
                   !game.pendingHandoff;
-                const canAttackSelect = !isAITurn && game.phase === "attack" && idx === game.attacker;
-                const canBlockSelect = !isAITurn && game.phase === "block" && idx === game.defender;
+                const canAttackSelect =
+                  !isAITurn && game.phase === "attack" && idx === game.attacker;
+                const canBlockSelect =
+                  !isAITurn && game.phase === "block" && idx === game.defender;
 
                 const selected =
-                  (idx === game.attacker && game.selectedAttack.includes(card.id)) ||
+                  (idx === game.attacker &&
+                    game.selectedAttack.includes(card.id)) ||
                   (idx === game.defender && game.selectedBlock === card.id) ||
-                  (canInitiativeSelect && game.selectedInitiative === card.id) ||
-                  (canMulliganSelect && game.selectedMulligan.includes(card.id));
+                  (canInitiativeSelect &&
+                    game.selectedInitiative === card.id) ||
+                  (canMulliganSelect &&
+                    game.selectedMulligan.includes(card.id));
 
                 const visualState = canMulliganSelect
                   ? mulliganCardState(card)
@@ -357,7 +533,10 @@ export default function App() {
 
                 const hardDisabled =
                   game.pendingHandoff ||
-                  (!canInitiativeSelect && !canMulliganSelect && !canAttackSelect && !canBlockSelect) ||
+                  (!canInitiativeSelect &&
+                    !canMulliganSelect &&
+                    !canAttackSelect &&
+                    !canBlockSelect) ||
                   visualState === "locked" ||
                   (canBlockSelect && visualState !== "active");
 

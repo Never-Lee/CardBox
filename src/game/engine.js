@@ -1,11 +1,29 @@
 import { AI_PLAYER, MAX_ROUNDS, RECOVERY_LIMIT } from "./constants.js";
-import { attackColor, attackDamage, cardLabel, drawToEight, initiativeValue, makeDeck, shuffle, sortCards } from "./cards.js";
+import {
+  attackColor,
+  attackDamage,
+  cardLabel,
+  drawToEight,
+  initiativeValue,
+  makeDeck,
+  shuffle,
+  sortCards,
+} from "./cards.js";
 import { aiPickInitiativeCard } from "../ai/ai.js";
 
 export function initialGame(aiEnabled = true, aiLevel = "basic") {
-  let p1 = { name: "Italský hřebec", deck: makeDeck("P1"), hand: [], table: [] };
+  let p1 = {
+    name: "Italský hřebec",
+    deck: makeDeck("P1"),
+    hand: [],
+    table: [],
+  };
   let p2 = {
-    name: aiEnabled ? (aiLevel === "hybrid" ? "Muhammad AI" : "Sparring partner") : "Zuřící býk",
+    name: aiEnabled
+      ? aiLevel === "hybrid"
+        ? "Muhammad AI"
+        : "Sparring partner"
+      : "Zuřící býk",
     deck: makeDeck("P2"),
     hand: [],
     table: [],
@@ -64,13 +82,23 @@ export function activeHumanPlayer(game) {
 
 export function finalizeTransition(previous, next) {
   const active = activeHumanPlayer(next);
-  if (!next.winner && !next.aiEnabled && activeHumanPlayer(previous) !== active) {
+  if (
+    !next.winner &&
+    !next.aiEnabled &&
+    activeHumanPlayer(previous) !== active
+  ) {
     return { ...next, viewingPlayer: active, pendingHandoff: true };
   }
   return { ...next, viewingPlayer: active, pendingHandoff: false };
 }
 
-function enterAttackAfterInitiative(game, starter, firstCard, secondCard, logMessage) {
+function enterAttackAfterInitiative(
+  game,
+  starter,
+  firstCard,
+  secondCard,
+  logMessage,
+) {
   return finalizeTransition(
     game,
     withLog(
@@ -91,12 +119,18 @@ function enterAttackAfterInitiative(game, starter, firstCard, secondCard, logMes
         lastAttackColor: null,
         mulliganPlayer: null,
       },
-      logMessage
-    )
+      logMessage,
+    ),
   );
 }
 
-function enterFirstRoundMulligan(game, starter, firstCard, secondCard, logMessage) {
+function enterFirstRoundMulligan(
+  game,
+  starter,
+  firstCard,
+  secondCard,
+  logMessage,
+) {
   return withLog(
     {
       ...game,
@@ -117,7 +151,7 @@ function enterFirstRoundMulligan(game, starter, firstCard, secondCard, logMessag
       currentAttack: null,
       lastAttackColor: null,
     },
-    `${logMessage} Mulligan: oba hráči mohou odhodit libovolný počet karet kromě karet odhalených pro iniciativu a dolíznout do 8.`
+    `${logMessage} Mulligan: oba hráči mohou odhodit libovolný počet karet kromě karet odhalených pro iniciativu a dolíznout do 8.`,
   );
 }
 
@@ -136,11 +170,13 @@ export function applyInitiativeSelection(game, pickedCard) {
         viewingPlayer: 1,
         pendingHandoff: true,
       },
-      `${game.players[0].name} vybral kartu pro iniciativu. Předej zařízení ${game.players[1].name}.`
+      `${game.players[0].name} vybral kartu pro iniciativu. Předej zařízení ${game.players[1].name}.`,
     );
   }
 
-  const firstCard = game.players[0].hand.find((card) => card.id === selectedInitiatives[0]);
+  const firstCard = game.players[0].hand.find(
+    (card) => card.id === selectedInitiatives[0],
+  );
   const secondCard = game.aiEnabled
     ? aiPickInitiativeCard(game.players[AI_PLAYER].hand)
     : game.players[1].hand.find((card) => card.id === selectedInitiatives[1]);
@@ -159,16 +195,23 @@ export function applyInitiativeSelection(game, pickedCard) {
         viewingPlayer: 0,
         pendingHandoff: false,
       },
-      `Remíza v iniciativě (${cardLabel(firstCard)} vs ${cardLabel(secondCard)}). Oba hráči vyberou novou kartu.`
+      `Remíza v iniciativě (${cardLabel(firstCard)} vs ${cardLabel(secondCard)}). Oba hráči vyberou novou kartu.`,
     );
   }
 
-  const starter = initiativeValue(secondCard) > initiativeValue(firstCard) ? 1 : 0;
+  const starter =
+    initiativeValue(secondCard) > initiativeValue(firstCard) ? 1 : 0;
   const logMessage = `Iniciativa: ${cardLabel(firstCard)} vs ${cardLabel(secondCard)}. Začíná ${game.players[starter].name}.`;
 
-return game.round === 1 && !game.mulliganUsed
-  ? enterFirstRoundMulligan(game, starter, firstCard, secondCard, logMessage)
-  : enterAttackAfterInitiative(game, starter, firstCard, secondCard, logMessage);
+  return game.round === 1 && !game.mulliganUsed
+    ? enterFirstRoundMulligan(game, starter, firstCard, secondCard, logMessage)
+    : enterAttackAfterInitiative(
+        game,
+        starter,
+        firstCard,
+        secondCard,
+        logMessage,
+      );
 }
 
 export function applyMulligan(game, chosenCards) {
@@ -176,7 +219,9 @@ export function applyMulligan(game, chosenCards) {
 
   const idx = game.mulliganPlayer;
   const player = game.players[idx];
-  const protectedIds = new Set((game.revealedInitiative ?? []).map((card) => card.id));
+  const protectedIds = new Set(
+    (game.revealedInitiative ?? []).map((card) => card.id),
+  );
   const chosen = chosenCards.filter((card) => !protectedIds.has(card.id));
   const chosenIds = new Set(chosen.map((card) => card.id));
 
@@ -209,7 +254,7 @@ export function applyMulligan(game, chosenCards) {
         viewingPlayer: nextIsAI ? 0 : other,
         pendingHandoff: !game.aiEnabled,
       },
-      `${player.name} provedl mulligan (${chosen.length} karet). Nyní mulligan ${players[other].name}.`
+      `${player.name} provedl mulligan (${chosen.length} karet). Nyní mulligan ${players[other].name}.`,
     );
   }
 
@@ -227,8 +272,8 @@ export function applyMulligan(game, chosenCards) {
         viewingPlayer: game.attacker,
         pendingHandoff: false,
       },
-      `${player.name} provedl mulligan (${chosen.length} karet). Mulligan končí. Útočí ${players[game.attacker].name}.`
-    )
+      `${player.name} provedl mulligan (${chosen.length} karet). Mulligan končí. Útočí ${players[game.attacker].name}.`,
+    ),
   );
 }
 
@@ -252,7 +297,7 @@ export function applyAttack(game, cards) {
       selectedAttack: [],
       selectedBlock: null,
     },
-    `${players[attacker].name} útočí: ${cards.map(cardLabel).join(" ")} — hrozí ${attackDamage(cards)} damage.`
+    `${players[attacker].name} útočí: ${cards.map(cardLabel).join(" ")} — hrozí ${attackDamage(cards)} damage.`,
   );
 }
 
@@ -288,11 +333,14 @@ export function applyUnblocked(game) {
           text: `${players[defender].name} jde k zemi.`,
         },
       },
-      `${players[defender].name} nemá dost karet na absorbování útoku. KO!`
+      `${players[defender].name} nemá dost karet na absorbování útoku. KO!`,
     );
   }
 
-  return withLog(next, `${players[defender].name} dostává zásah za ${damage} damage.`);
+  return withLog(
+    next,
+    `${players[defender].name} dostává zásah za ${damage} damage.`,
+  );
 }
 
 export function applyBlock(game, block) {
@@ -301,7 +349,9 @@ export function applyBlock(game, block) {
 
   players[defender] = {
     ...players[defender],
-    hand: sortCards(players[defender].hand.filter((card) => card.id !== block.id)),
+    hand: sortCards(
+      players[defender].hand.filter((card) => card.id !== block.id),
+    ),
     table: [...players[defender].table, block],
   };
 
@@ -323,7 +373,7 @@ export function applyBlock(game, block) {
         text: `${players[defender].name} blokuje ${cardLabel(block)}.`,
       },
     },
-    `${players[defender].name} blokuje ${cardLabel(block)} a přebírá iniciativu. Další útok musí být ${required}.`
+    `${players[defender].name} blokuje ${cardLabel(block)} a přebírá iniciativu. Další útok musí být ${required}.`,
   );
 }
 
@@ -354,7 +404,7 @@ export function applyPause(game) {
         recoveryPlayer: attacker,
         selectedRecoverySuit: null,
       },
-      `${players[attacker].name} pauzíruje, líže ${drawn} a ukončuje kolo ${game.round}. Recovery začíná ${players[attacker].name}.`
+      `${players[attacker].name} pauzíruje, líže ${drawn} a ukončuje kolo ${game.round}. Recovery začíná ${players[attacker].name}.`,
     );
   }
 
@@ -364,7 +414,9 @@ export function applyPause(game) {
 export function applyRecovery(game, suitId) {
   const idx = game.recoveryPlayer;
   const player = game.players[idx];
-  const chosen = suitId ? player.table.filter((card) => card.suit === suitId) : [];
+  const chosen = suitId
+    ? player.table.filter((card) => card.suit === suitId)
+    : [];
   const chosenIds = new Set(chosen.map((card) => card.id));
   const players = [...game.players];
 
@@ -383,7 +435,7 @@ export function applyRecovery(game, suitId) {
     const other = idx === 0 ? 1 : 0;
     return withLog(
       { ...game, players, recoveryPlayer: other, selectedRecoverySuit: null },
-      `${player.name} vrací ${chosen.length} karet jednoho suitu a líže ${drawn}. Nyní recoveruje ${players[other].name}.`
+      `${player.name} vrací ${chosen.length} karet jednoho suitu a líže ${drawn}. Nyní recoveruje ${players[other].name}.`,
     );
   }
 
@@ -392,11 +444,22 @@ export function applyRecovery(game, suitId) {
   if (nextRound > game.maxRounds) {
     const score0 = players[0].table.length;
     const score1 = players[1].table.length;
-    const winner = score0 === score1 ? "Remíza" : score0 < score1 ? players[0].name : players[1].name;
+    const winner =
+      score0 === score1
+        ? "Remíza"
+        : score0 < score1
+          ? players[0].name
+          : players[1].name;
 
     return withLog(
-      { ...game, players, winner, recoveryPlayer: null, selectedRecoverySuit: null },
-      `Konec zápasu. Skóre: ${score0}:${score1}.`
+      {
+        ...game,
+        players,
+        winner,
+        recoveryPlayer: null,
+        selectedRecoverySuit: null,
+      },
+      `Konec zápasu. Skóre: ${score0}:${score1}.`,
     );
   }
 
@@ -426,6 +489,6 @@ export function applyRecovery(game, suitId) {
       viewingPlayer: 0,
       pendingHandoff: false,
     },
-    `${player.name} vrací ${chosen.length} karet jednoho suitu a líže ${drawn}. Kolo ${nextRound}: vyber kartu pro iniciativu.`
+    `${player.name} vrací ${chosen.length} karet jednoho suitu a líže ${drawn}. Kolo ${nextRound}: vyber kartu pro iniciativu.`,
   );
 }

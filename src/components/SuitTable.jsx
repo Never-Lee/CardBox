@@ -1,1 +1,61 @@
-import{SUITS}from"../game/constants.js";import{cardLabel,sortCards}from"../game/cards.js";export function SuitTable({cards,recoveryMode,selectedRecoverySuit,toggleRecoverySuit,canPickRecoverySuit}){if(!cards.length)return <p className="muted">Žádné vyložené karty.</p>;return <div className="groups">{SUITS.map(s=>{const cs=sortCards(cards.filter(c=>c.suit===s.id));if(!cs.length)return null;const can=recoveryMode&&canPickRecoverySuit(s.id),selected=selectedRecoverySuit===s.id;return <div key={s.id} className={`suit-group ${selected?"selected-suit":""}`}><div className="suit-table-head"><b className={s.color}>{s.symbol} {s.name}</b>{recoveryMode&&<button disabled={!can} onClick={()=>can&&toggleRecoverySuit(s.id)} className={`mini-card recover-suit-btn ${selected?"selected":""} ${!can?"disabled":""}`}>Recover celý suit ({cs.length})</button>}</div><div className="card-row">{cs.map(c=><span key={c.id} className={`mini-card ${c.color} ${selected?"selected":""}`}>{cardLabel(c)}</span>)}</div></div>})}</div>}
+import { SUITS } from "../game/constants.js";
+import { cardLabel, sortCards } from "../game/cards.js";
+
+export function SuitTable({
+  cards,
+  recoveryMode,
+  selectedRecoverySuit,
+  toggleRecoverySuit,
+}) {
+  if (!cards.length) {
+    return <p className="muted">Žádné vyložené karty.</p>;
+  }
+
+  return (
+    <div className="groups">
+      {SUITS.map((suit) => {
+        const suitCards = sortCards(
+          cards.filter((card) => card.suit === suit.id)
+        );
+
+        if (!suitCards.length) return null;
+
+        const selected = recoveryMode && selectedRecoverySuit === suit.id;
+
+        return (
+          <div key={suit.id} className="suit-group">
+            <div className="suit-table-head">
+              <b className={suit.color}>
+                {suit.symbol} {suit.name}
+              </b>
+
+              {recoveryMode && (
+                <button
+                  className={`mini-card ${suit.color} ${
+                    selected ? "selected" : ""
+                  }`}
+                  onClick={() => toggleRecoverySuit(suit.id)}
+                >
+                  Recover celý suit
+                </button>
+              )}
+            </div>
+
+            <div className="card-row">
+              {suitCards.map((card) => (
+                <span
+                  key={card.id}
+                  className={`mini-card ${card.color} ${
+                    selected ? "selected" : ""
+                  }`}
+                >
+                  {cardLabel(card)}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

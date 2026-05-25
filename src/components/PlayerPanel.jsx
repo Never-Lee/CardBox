@@ -1,1 +1,48 @@
-import{GroupedHand}from"./GroupedHand.jsx";import{Panel}from"./Panel.jsx";import{SuitTable}from"./SuitTable.jsx";export function PlayerPanel({idx,game,renderCard,toggleRecoverySuit,canPickRecoverySuit,isAITurn}){const p=game.players[idx],isRecovery=game.phase==="recovery"&&game.recoveryPlayer===idx,role=idx===game.attacker&&game.phase!=="initiative"?"attacker":idx===game.defender&&game.phase!=="initiative"?"defender":"";return <Panel className={role}><div className="player-head"><h2>{p.name}{isRecovery?" — recovery":""}</h2><span>Balíček: {p.deck.length} | Ruka: {p.hand.length} | Vyloženo: {p.table.length}</span></div><h3>Ruka</h3><GroupedHand hand={p.hand} hidden={game.pendingHandoff||idx!==game.viewingPlayer} renderCard={renderCard}/><h3>Vyložené karty</h3><SuitTable cards={p.table} recoveryMode={isRecovery&&!isAITurn} selectedRecoverySuit={game.selectedRecoverySuit} toggleRecoverySuit={toggleRecoverySuit} canPickRecoverySuit={canPickRecoverySuit}/></Panel>}
+import { GroupedHand } from "./GroupedHand.jsx";
+import { Panel } from "./Panel.jsx";
+import { SuitTable } from "./SuitTable.jsx";
+export function PlayerPanel({
+  idx,
+  game,
+  renderCard,
+  toggleRecoverySuit,
+  canPickRecoverySuit,
+  isAITurn,
+}) {
+  const p = game.players[idx],
+    isRecovery = game.phase === "recovery" && game.recoveryPlayer === idx,
+    role =
+      idx === game.attacker && game.phase !== "initiative"
+        ? "attacker"
+        : idx === game.defender && game.phase !== "initiative"
+          ? "defender"
+          : "";
+  return (
+    <Panel className={role}>
+      <div className="player-head">
+        <h2>
+          {p.name}
+          {isRecovery ? " — recovery" : ""}
+        </h2>
+        <span>
+          Balíček: {p.deck.length} | Ruka: {p.hand.length} | Vyloženo:{" "}
+          {p.table.length}
+        </span>
+      </div>
+      <h3>Ruka</h3>
+      <GroupedHand
+        hand={p.hand}
+        hidden={game.pendingHandoff || idx !== game.viewingPlayer}
+        renderCard={renderCard}
+      />
+      <h3>Vyložené karty</h3>
+      <SuitTable
+        cards={p.table}
+        recoveryMode={isRecovery && !isAITurn}
+        selectedRecoverySuit={game.selectedRecoverySuit}
+        toggleRecoverySuit={toggleRecoverySuit}
+        canPickRecoverySuit={canPickRecoverySuit}
+      />
+    </Panel>
+  );
+}
