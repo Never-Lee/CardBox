@@ -28,6 +28,7 @@ export function initialGame(aiEnabled = true, aiLevel = "basic") {
     selectedAttack: [],
     selectedBlock: null,
     selectedRecoverySuit: null,
+    selectedMulligan: [],
     selectedInitiative: null,
     selectedInitiatives: [null, null],
     initiativePlayer: 0,
@@ -36,6 +37,8 @@ export function initialGame(aiEnabled = true, aiLevel = "basic") {
     revealedInitiative: null,
     recoveryStarter: null,
     recoveryPlayer: null,
+    mulliganPlayer: null,
+    mulliganDone: [false, false],
     winner: null,
     aiEnabled,
     aiLevel,
@@ -51,6 +54,7 @@ export function withLog(game, message) {
 
 export function activeHumanPlayer(game) {
   if (game.phase === "initiative") return game.initiativePlayer ?? 0;
+  if (game.phase === "mulligan") return game.mulliganPlayer ?? 0;
   if (game.phase === "attack") return game.attacker;
   if (game.phase === "block") return game.defender;
   if (game.phase === "recovery") return game.recoveryPlayer;
@@ -63,6 +67,55 @@ export function finalizeTransition(previous, next) {
     return { ...next, viewingPlayer: active, pendingHandoff: true };
   }
   return { ...next, viewingPlayer: active, pendingHandoff: false };
+}
+
+function startMulliganIfFirstRound(game, starter, firstCard, secondCard, logMessage) {
+  if (game.round !== 1) {
+    return finalizeTransition(
+      game,
+      withLog(
+        {
+          ...game,
+          phase: "attack",
+          attacker: starter,
+          defender: starter === 0 ? 1 : 0,
+          viewingPlayer: starter,
+          revealedInitiative: [firstCard, secondCard],
+          selectedInitiative: null,
+          selectedInitiatives: [null, null],
+          initiativePlayer: 0,
+          selectedAttack: [],
+          selectedBlock: null,
+          currentAttack: null,
+          lastAttackColor: null,
+        },
+        logMessage
+      )
+    );
+  }
+
+  return withLog(
+    {
+      ...game,
+      phase: "mulligan",
+      attacker: starter,
+      defender: starter === 0 ? 1 : 0,
+      viewingPlayer: 0,
+      revealedInitiative: [firstCard, secondCard],
+      selectedInitiative: null,
+      selectedInitiatives: [null, null],
+      initiativePlayer: 0,
+      selectedAttack: [],
+      selectedBlock: null,
+      selectedMulligan: [],
+      mulliganPlayer: 0,
+      mulliganDone: [false, false],
+      currentAttack: null,
+      lastAttackColor: null,
+      pendingHandoff: false,
+    },
+    `${logMessage} Mulligan: oba hráči mohou odhodit libovolný počet karet kromě karet odhalených pro iniciativu a dolíznout do 8.`
+  );
 }
 
 export function applyInitiativeSelection(game, pickedCard) {
@@ -91,42 +144,80 @@ export function applyInitiativeSelection(game, pickedCard) {
 
   if (!firstCard || !secondCard) return game;
 
-  let starter = 0;
+  if (initiativeValue(firstCard) === initiativeValue(secondCard)) {
+    return withLog(
+      {
+        ...game,
+        selectedInitiative: null,
+        selectedInitiatives: [null, null],
+        initiativePlayer: 0,
+        revealedInitiative: [firstCard, secondCard],
+        phase: "initiative",
+        viewingPlayer: 0,
+        pendingHandoff: false,
+      },
+      `Remíza v iniciativě (${cardLabel(firstCard)} vs ${cardLabel(secondCard)}). Oba hráči vyberou novou kartu.`
+    );
+  }
 
-if (initiativeValue(secondCard) > initiativeValue(firstCard)) {
-  starter = 1;
-} else if (initiativeValue(firstCard) === initiativeValue(secondCard)) {
-  return withLog(
-    {
-      ...game,
-      selectedInitiative: null,
-      selectedInitiatives: [null, null],
-      initiativePlayer: 0,
-      revealedInitiative: [firstCard, secondCard],
-      phase: "initiative",
-    },
-    `Remíza v iniciativě (${cardLabel(firstCard)} vs ${cardLabel(secondCard)}). Oba hráči vyberou novou kartu.`
-  );
+  const starter = initiativeValue(secondCard) > initiativeValue(firstCard) ? 1 : 0;
+  const logMessage = `Iniciativa: ${cardLabel(firstCard)} vs ${cardLabel(secondCard)}. Začíná ${game.players[starter].name}.`;
+
+  return startMulliganIfFirstRound(game, starter, firstCard, secondCard, logMessage);
 }
+
+export function applyMulligan(game, chosenCards) {
+  const idx = game.mulliganPlayer;
+  const player = game.players[idx];
+  const protectedIds = new Set((game.revealedInitiative ?? []).map((card) => card.id));
+  const chosen = chosenCards.filter((card) => !protectedIds.has(card.id));
+  const chosenIds = new Set(chosen.map((card) => card.id));
+
+  const players = [...game.players];
+
+  let nextPlayer = {
+    ...player,
+    hand: sortCards(player.hand.filter((card) => !chosenIds.has(card.id))),
+    deck: shuffle([...player.deck, ...chosen]),
+  };
+
+  nextPlayer = drawToEight(nextPlayer);
+  players[idx] = nextPlayer;
+
+  const done = [...(game.mulliganDone ?? [false, false])];
+  done[idx] = true;
+
+  const nextPlayerIndex = idx === 0 ? 1 : 0;
+
+  if (!done[nextPlayerIndex]) {
+    return withLog(
+      {
+        ...game,
+        players,
+        mulliganDone: done,
+        mulliganPlayer: nextPlayerIndex,
+        selectedMulligan: [],
+        viewingPlayer: nextPlayerIndex,
+        pendingHandoff: !game.aiEnabled,
+      },
+      `${player.name} provedl mulligan (${chosen.length} karet). Nyní mulligan ${players[nextPlayerIndex].name}.`
+    );
+  }
+
   return finalizeTransition(
     game,
     withLog(
       {
         ...game,
+        players,
+        mulliganDone: done,
+        mulliganPlayer: null,
+        selectedMulligan: [],
         phase: "attack",
-        attacker: starter,
-        defender: starter === 0 ? 1 : 0,
-        viewingPlayer: starter,
-        revealedInitiative: [firstCard, secondCard],
-        selectedInitiative: null,
-        selectedInitiatives: [null, null],
-        initiativePlayer: 0,
-        selectedAttack: [],
-        selectedBlock: null,
-        currentAttack: null,
-        lastAttackColor: null,
+        viewingPlayer: game.attacker,
+        pendingHandoff: false,
       },
-      `Iniciativa: ${cardLabel(firstCard)} vs ${cardLabel(secondCard)}. Začíná ${game.players[starter].name}.`
+      `${player.name} provedl mulligan (${chosen.length} karet). Mulligan končí. Útočí ${players[game.attacker].name}.`
     )
   );
 }
@@ -311,6 +402,7 @@ export function applyRecovery(game, suitId) {
       selectedAttack: [],
       selectedBlock: null,
       selectedRecoverySuit: null,
+      selectedMulligan: [],
       selectedInitiative: null,
       selectedInitiatives: [null, null],
       initiativePlayer: 0,
@@ -319,6 +411,8 @@ export function applyRecovery(game, suitId) {
       revealedInitiative: null,
       recoveryStarter: null,
       recoveryPlayer: null,
+      mulliganPlayer: null,
+      mulliganDone: [false, false],
       viewingPlayer: 0,
       pendingHandoff: false,
     },

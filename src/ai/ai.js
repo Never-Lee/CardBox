@@ -74,6 +74,21 @@ export function aiPickInitiativeCard(hand) {
   return sortCards(hand)[0];
 }
 
+export function chooseAIMulligan(game) {
+  const ai = game.players[AI_PLAYER];
+  const protectedIds = new Set((game.revealedInitiative ?? []).map((card) => card.id));
+
+  const attacks = allValidAttacks(ai.hand, null);
+  const comboCardIds = new Set(attacks.filter(attackIsCombo).flatMap((cards) => cards.map((card) => card.id)));
+
+  return ai.hand.filter((card) => {
+    if (protectedIds.has(card.id)) return false;
+    if (isFigure(card)) return false;
+    if (comboCardIds.has(card.id)) return false;
+    return true;
+  });
+}
+
 export function bestBlockForAttack(hand, attackSize) {
   const blocks = hand.filter((card) => canCardBlock(card, attackSize));
   if (!blocks.length) return null;
@@ -91,7 +106,6 @@ export function chooseAIAttack(game) {
   const lethal = attacks.find((cards) => attackDamage(cards) >= enemy.deck.length);
   if (lethal) return lethal;
 
-  // Sparring partner = původní "slušná" Muhammad heuristika.
   if (!hybrid) {
     const pressure = attacks.filter((cards) => {
       const damage = attackDamage(cards);
@@ -113,9 +127,6 @@ export function chooseAIAttack(game) {
     return null;
   }
 
-  // Muhammad AI v2:
-  // Baseline: když má kombo, chce si ideálně vynutit protiútok přes blok,
-  // ne okamžitě pálit figury nebo velké kombo bez okna.
   const combos = attacks.filter(attackIsCombo);
   const nonFigureJabs = attacks.filter((cards) => attackIsJab(cards) && !attackSpendsFigure(cards));
   const safeCombos = combos.filter((cards) => {
@@ -128,22 +139,18 @@ export function chooseAIAttack(game) {
   const enemyVeryLowDeck = enemy.deck.length <= 10;
   const enemySpentFigure = opponentRecentlySpentFigure(game);
 
-  // Meta window: kombo až když soupeř slábne nebo zbytečně utratil figuru.
   if ((enemyLowDeck || enemySpentFigure) && safeCombos.length) {
     return bestAttack(safeCombos);
   }
 
-  // Pokud je soupeř už velmi nízko, tlač i horším kombem.
   if (enemyVeryLowDeck && combos.length) {
     return bestAttack(combos);
   }
 
-  // Bez okna jen levný jab, ale ne figurou.
   if (nonFigureJabs.length && enemy.deck.length > 8) {
     return nonFigureJabs[0];
   }
 
-  // Pokud má plnou ruku a žádný čistý jab, zahraj nejméně bolestivý nefigurový útok.
   const nonFigureAttacks = attacks.filter((cards) => !attackSpendsFigure(cards));
   if (nonFigureAttacks.length && ai.hand.length >= 7) {
     return bestAttack(nonFigureAttacks);
@@ -161,7 +168,6 @@ export function chooseAIBlock(game) {
 
   if (!possibleBlocks.length) return null;
 
-  // Sparring partner = původní Muhammad block economy.
   if (!hybrid) {
     const block = cheapestBlock(possibleBlocks);
     if (block.rank === "A") {
@@ -177,7 +183,6 @@ export function chooseAIBlock(game) {
     return null;
   }
 
-  // Muhammad AI v2: když má po bloku kombo, blok je způsob, jak si vynutit protiútok.
   const counterBlock = bestBlockForCounterattack(game, possibleBlocks);
   const futureHand = counterBlock ? handWithoutCard(ai.hand, counterBlock) : ai.hand;
   const futureAttacks = counterBlock ? allValidAttacks(futureHand, counterBlock.color) : [];
@@ -187,13 +192,11 @@ export function chooseAIBlock(game) {
   const danger = damage >= 6 || attackSize >= 3 || ai.deck.length <= 14;
 
   if (hasCounterCombo && counterBlock) {
-    // Eso šetři, pokud nejde o velkou ránu nebo soupeř právě utratil figuru.
     if (counterBlock.rank === "A") {
       if (damage >= 12 || ai.deck.length <= 10 || opponentUsedFigureNow) return counterBlock;
       return null;
     }
 
-    // Tohle je baseline: mám kombo, tak chci převzít iniciativu.
     if (damage >= 2) return counterBlock;
   }
 
@@ -222,16 +225,12 @@ export function chooseAIRecovery(game) {
     const aces = cards.filter((card) => card.rank === "A");
     const numbers = cards.filter((card) => !isFigure(card));
 
-    // Full suit recovery: počty jsou dobré, figury jsou ještě lepší,
-    // ale čísla už mají skutečnou hodnotu, protože obnovují suit density.
     let score = cards.length * 2 + figures.length * 5 + aces.length * 4 + numbers.length;
 
-    // V late game preferuj suit, který dodá objem do balíku.
     if (game.round >= 5 || ai.deck.length <= 14) {
       score += cards.length * 2;
     }
 
-    // Když soupeř smrdí KO, preferuj suit s figurami/kombovým potenciálem.
     if (enemy.deck.length <= 14) {
       score += figures.length * 3;
     }
