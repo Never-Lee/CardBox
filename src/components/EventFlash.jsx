@@ -13,13 +13,12 @@ export function EventFlash({ event, clear }) {
   const isBlock = event.type === "block";
 
   return (
-    <div className={`event-flash ${isKO ? "event-flash-ko" : ""}`}>
+    <div className="damage-flash-overlay">
       <motion.div
         initial={{ scale: 0.35, opacity: 0, rotate: isBlock ? -8 : 0 }}
         animate={{ scale: 1.15, opacity: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 18 }}
-        className={`event-box ${isKO ? "event-box-ko" : ""}`}
-      >
+className={`damage-flash event-box ${isKO ? "event-box-ko" : ""}`}      >
         <div className="event-icon">{isKO ? "💥" : "🥊🥊"}</div>
         <div className={`event-title ${isKO ? "event-title-ko" : ""}`}>
           {isKO ? "KO!" : "BLOK!"}
