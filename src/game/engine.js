@@ -40,6 +40,7 @@ export function initialGame(aiEnabled = true, aiLevel = "basic") {
     mulliganPlayer: null,
     mulliganDone: [false, false],
     winner: null,
+    mulliganUsed: false,
     aiEnabled,
     aiLevel,
     damageFlash: null,
@@ -165,9 +166,9 @@ export function applyInitiativeSelection(game, pickedCard) {
   const starter = initiativeValue(secondCard) > initiativeValue(firstCard) ? 1 : 0;
   const logMessage = `Iniciativa: ${cardLabel(firstCard)} vs ${cardLabel(secondCard)}. Začíná ${game.players[starter].name}.`;
 
-  return game.round === 1
-    ? enterFirstRoundMulligan(game, starter, firstCard, secondCard, logMessage)
-    : enterAttackAfterInitiative(game, starter, firstCard, secondCard, logMessage);
+return game.round === 1 && !game.mulliganUsed
+  ? enterFirstRoundMulligan(game, starter, firstCard, secondCard, logMessage)
+  : enterAttackAfterInitiative(game, starter, firstCard, secondCard, logMessage);
 }
 
 export function applyMulligan(game, chosenCards) {
@@ -221,6 +222,7 @@ export function applyMulligan(game, chosenCards) {
         mulliganDone: done,
         mulliganPlayer: null,
         selectedMulligan: [],
+        mulliganUsed: true,
         phase: "attack",
         viewingPlayer: game.attacker,
         pendingHandoff: false,
