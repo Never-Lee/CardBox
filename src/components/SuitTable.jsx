@@ -12,7 +12,9 @@ export function SuitTable({
   return (
     <div className="groups">
       {SUITS.map((suit) => {
-        const suitCards = sortCards(cards.filter((card) => card.suit === suit.id));
+        const suitCards = sortCards(
+          cards.filter((card) => card.suit === suit.id),
+        );
         if (!suitCards.length) return null;
 
         const isSelectedForCurrentPlayer =
@@ -21,7 +23,9 @@ export function SuitTable({
         return (
           <div key={suit.id} className="suit-group">
             <div className="suit-table-head">
-              <b className={suit.color}>{suit.symbol} {suit.name}</b>
+              <b className={suit.color}>
+                {suit.symbol} {suit.name}
+              </b>
 
               {recoveryMode && (
                 <button
