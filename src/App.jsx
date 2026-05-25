@@ -48,12 +48,11 @@ export default function App() {
     [attacker.hand, game.selectedAttack]
   );
 
-  const mulliganPlayer = game.phase === "mulligan" && game.mulliganPlayer !== null
-    ? game.players[game.mulliganPlayer]
-    : null;
+  const mulliganPlayer =
+    game.phase === "mulligan" && game.mulliganPlayer !== null ? game.players[game.mulliganPlayer] : null;
 
   const selectedMulliganCards = useMemo(
-    () => mulliganPlayer ? sortCards(mulliganPlayer.hand.filter((card) => game.selectedMulligan.includes(card.id))) : [],
+    () => (mulliganPlayer ? sortCards(mulliganPlayer.hand.filter((card) => game.selectedMulligan.includes(card.id))) : []),
     [mulliganPlayer, game.selectedMulligan]
   );
 
@@ -141,10 +140,11 @@ export default function App() {
 
   function confirmMulligan() {
     if (game.phase !== "mulligan" || game.mulliganPlayer === null || game.winner || isAITurn || game.pendingHandoff) return;
+
     setGame((g) => {
       const player = g.players[g.mulliganPlayer];
       const chosen = player.hand.filter((card) => g.selectedMulligan.includes(card.id));
-      return finalizeTransition(g, applyMulligan(g, chosen));
+      return applyMulligan(g, chosen);
     });
   }
 
