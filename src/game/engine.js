@@ -69,31 +69,33 @@ export function finalizeTransition(previous, next) {
   return { ...next, viewingPlayer: active, pendingHandoff: false };
 }
 
-function startMulliganIfFirstRound(game, starter, firstCard, secondCard, logMessage) {
-  if (game.round !== 1) {
-    return finalizeTransition(
-      game,
-      withLog(
-        {
-          ...game,
-          phase: "attack",
-          attacker: starter,
-          defender: starter === 0 ? 1 : 0,
-          viewingPlayer: starter,
-          revealedInitiative: [firstCard, secondCard],
-          selectedInitiative: null,
-          selectedInitiatives: [null, null],
-          initiativePlayer: 0,
-          selectedAttack: [],
-          selectedBlock: null,
-          currentAttack: null,
-          lastAttackColor: null,
-        },
-        logMessage
-      )
-    );
-  }
+function enterAttackAfterInitiative(game, starter, firstCard, secondCard, logMessage) {
+  return finalizeTransition(
+    game,
+    withLog(
+      {
+        ...game,
+        phase: "attack",
+        attacker: starter,
+        defender: starter === 0 ? 1 : 0,
+        viewingPlayer: starter,
+        revealedInitiative: [firstCard, secondCard],
+        selectedInitiative: null,
+        selectedInitiatives: [null, null],
+        initiativePlayer: 0,
+        selectedAttack: [],
+        selectedBlock: null,
+        selectedMulligan: [],
+        currentAttack: null,
+        lastAttackColor: null,
+        mulliganPlayer: null,
+      },
+      logMessage
+    )
+  );
+}
 
+function enterFirstRoundMulligan(game, starter, firstCard, secondCard, logMessage) {
   return withLog(
     {
       ...game,
@@ -101,6 +103,7 @@ function startMulliganIfFirstRound(game, starter, firstCard, secondCard, logMess
       attacker: starter,
       defender: starter === 0 ? 1 : 0,
       viewingPlayer: 0,
+      pendingHandoff: false,
       revealedInitiative: [firstCard, secondCard],
       selectedInitiative: null,
       selectedInitiatives: [null, null],
@@ -112,7 +115,6 @@ function startMulliganIfFirstRound(game, starter, firstCard, secondCard, logMess
       mulliganDone: [false, false],
       currentAttack: null,
       lastAttackColor: null,
-      pendingHandoff: false,
     },
     `${logMessage} Mulligan: oba hráči mohou odhodit libovolný počet karet kromě karet odhalených pro iniciativu a dolíznout do 8.`
   );
@@ -163,10 +165,14 @@ export function applyInitiativeSelection(game, pickedCard) {
   const starter = initiativeValue(secondCard) > initiativeValue(firstCard) ? 1 : 0;
   const logMessage = `Iniciativa: ${cardLabel(firstCard)} vs ${cardLabel(secondCard)}. Začíná ${game.players[starter].name}.`;
 
-  return startMulliganIfFirstRound(game, starter, firstCard, secondCard, logMessage);
+  return game.round === 1
+    ? enterFirstRoundMulligan(game, starter, firstCard, secondCard, logMessage)
+    : enterAttackAfterInitiative(game, starter, firstCard, secondCard, logMessage);
 }
 
 export function applyMulligan(game, chosenCards) {
+  if (game.phase !== "mulligan" || game.mulliganPlayer === null) return game;
+
   const idx = game.mulliganPlayer;
   const player = game.players[idx];
   const protectedIds = new Set((game.revealedInitiative ?? []).map((card) => card.id));
@@ -187,20 +193,22 @@ export function applyMulligan(game, chosenCards) {
   const done = [...(game.mulliganDone ?? [false, false])];
   done[idx] = true;
 
-  const nextPlayerIndex = idx === 0 ? 1 : 0;
+  const other = idx === 0 ? 1 : 0;
 
-  if (!done[nextPlayerIndex]) {
+  if (!done[other]) {
+    const nextIsAI = game.aiEnabled && other === AI_PLAYER;
+
     return withLog(
       {
         ...game,
         players,
         mulliganDone: done,
-        mulliganPlayer: nextPlayerIndex,
+        mulliganPlayer: other,
         selectedMulligan: [],
-        viewingPlayer: nextPlayerIndex,
+        viewingPlayer: nextIsAI ? 0 : other,
         pendingHandoff: !game.aiEnabled,
       },
-      `${player.name} provedl mulligan (${chosen.length} karet). Nyní mulligan ${players[nextPlayerIndex].name}.`
+      `${player.name} provedl mulligan (${chosen.length} karet). Nyní mulligan ${players[other].name}.`
     );
   }
 
