@@ -24,6 +24,18 @@ import {
   chooseAIMulligan,
   chooseAIRecovery,
 } from "./ai/ai.js";
+import blockSound from "./assets/sounds/block.mp3";
+import clickSound from "./assets/sounds/click.mp3";
+import comboSound from "./assets/sounds/combo.mp3";
+import finishSound from "./assets/sounds/finish.mp3";
+import jabSound from "./assets/sounds/jab.mp3";
+import koSound from "./assets/sounds/ko.mp3";
+import startSound from "./assets/sounds/start.mp3";
+function playSound(soundFile, volume = 0.7) {
+  const audio = new Audio(soundFile);
+  audio.volume = volume;
+  audio.play();
+}
 import { Actions } from "./components/Actions.jsx";
 import { Button } from "./components/Button.jsx";
 import { DamageFlash } from "./components/DamageFlash.jsx";
@@ -137,6 +149,7 @@ export default function App() {
     setGameMode(mode);
     const aiEnabled = mode !== "hotseat";
     const aiLevel = mode === "hybrid-ai" ? "hybrid" : "basic";
+    playSound(startSound);
     setGame(initialGame(aiEnabled, aiLevel));
     setScreen("game");
     setShowLog(false);
@@ -278,21 +291,22 @@ export default function App() {
   }
 
   function commitAttack() {
-    if (!canAttack) return;
-    setGame((g) =>
-      finalizeTransition(
+  if (!canAttack) return;
+
+  setGame((g) =>
+    finalizeTransition(
+      g,
+      applyAttack(
         g,
-        applyAttack(
-          g,
-          sortCards(
-            g.players[g.attacker].hand.filter((card) =>
-              g.selectedAttack.includes(card.id),
-            ),
+        sortCards(
+          g.players[g.attacker].hand.filter((card) =>
+            g.selectedAttack.includes(card.id),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   function passBlock() {
     if (game.phase !== "block" || isAITurn || game.pendingHandoff) return;
@@ -307,6 +321,7 @@ export default function App() {
       game.pendingHandoff
     )
       return;
+      playSound(blockSound);
     setGame((g) => {
       const block = g.players[g.defender].hand.find(
         (card) => card.id === g.selectedBlock,
@@ -382,6 +397,34 @@ export default function App() {
     game.mulliganPlayer,
     game.currentAttack?.length,
   ]);
+
+  useEffect(() => {
+  if (!game.eventFlash) return;
+
+  if (game.eventFlash.type === "ko") {
+    playSound(koSound, 0.9);
+  }
+
+  if (game.eventFlash.type === "block") {
+    playSound(blockSound, 0.7);
+  }
+}, [game.eventFlash]);
+
+useEffect(() => {
+  if (game.winner) {
+    playSound(finishSound, 0.8);
+  }
+}, [game.winner]);
+
+useEffect(() => {
+  if (!game.damageFlash) return;
+
+  if (game.damageFlash >= 6) {
+    playSound(comboSound, 0.7);
+  } else {
+    playSound(jabSound, 0.7);
+  }
+}, [game.damageFlash]);
 
   const currentBlock =
     game.phase === "block" && game.selectedBlock
