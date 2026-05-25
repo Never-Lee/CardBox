@@ -77,7 +77,6 @@ export function aiPickInitiativeCard(hand) {
 export function chooseAIMulligan(game) {
   const ai = game.players[AI_PLAYER];
   const protectedIds = new Set((game.revealedInitiative ?? []).map((card) => card.id));
-
   const attacks = allValidAttacks(ai.hand, null);
   const comboCardIds = new Set(attacks.filter(attackIsCombo).flatMap((cards) => cards.map((card) => card.id)));
 

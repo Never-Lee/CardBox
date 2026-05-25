@@ -5,7 +5,7 @@ import { Panel } from "./Panel.jsx";
 export function Actions({
   game,
   selectedAttackCards,
-  selectedMulliganCards,
+  selectedMulliganCards = [],
   attackValid,
   respectsAlternation,
   canAttack,
