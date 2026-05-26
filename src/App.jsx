@@ -24,6 +24,7 @@ import {
   chooseAIMulligan,
   chooseAIRecovery,
 } from "./ai/ai.js";
+import { InitiativeReveal } from "./components/InitiativeReveal.jsx";
 import blockSound from "./assets/sounds/block.mp3";
 import clickSound from "./assets/sounds/click.mp3";
 import comboSound from "./assets/sounds/combo.mp3";
@@ -53,6 +54,10 @@ export default function App() {
   const [gameMode, setGameMode] = useState("basic-ai");
   const [showLog, setShowLog] = useState(false);
   const [game, setGame] = useState(() => initialGame(true, "basic"));
+  const [showInitiativeReveal, setShowInitiativeReveal] = useState(false);
+  const [lastInitiativeRevealKey, setLastInitiativeRevealKey] = useState(null);
+  const [initiativeRevealKey, setInitiativeRevealKey] = useState(null);
+  const [screenShake, setScreenShake] = useState("");
 
   const attacker = game.players[game.attacker];
   const defender = game.players[game.defender];
@@ -184,6 +189,7 @@ export default function App() {
         (card) => card.id === g.selectedInitiative,
       );
       if (!picked) return g;
+      setInitiativeRevealKey(Date.now());
       return applyInitiativeSelection(g, picked);
     });
   }
@@ -397,6 +403,7 @@ export default function App() {
     game.mulliganPlayer,
     game.currentAttack?.length,
   ]);
+  
 
   useEffect(() => {
   if (!game.eventFlash) return;
@@ -426,6 +433,34 @@ useEffect(() => {
   }
 }, [game.damageFlash]);
 
+useEffect(() => {
+  if (game.eventFlash?.type === "ko") {
+    setScreenShake("shake-ko");
+  } else if (game.damageFlash) {
+    setScreenShake(game.damageFlash >= 6 ? "shake-combo" : "shake-jab");
+  } else {
+    return;
+  }
+
+  const timeout = setTimeout(() => {
+    setScreenShake("");
+  }, 450);
+
+  return () => clearTimeout(timeout);
+}, [game.damageFlash, game.eventFlash]);
+
+useEffect(() => {
+  if (!initiativeRevealKey) return;
+
+  setShowInitiativeReveal(true);
+
+  const timeout = setTimeout(() => {
+    setShowInitiativeReveal(false);
+  }, 1200);
+
+  return () => clearTimeout(timeout);
+}, [initiativeRevealKey]);
+
   const currentBlock =
     game.phase === "block" && game.selectedBlock
       ? defender.hand.find((card) => card.id === game.selectedBlock)
@@ -450,7 +485,7 @@ useEffect(() => {
   }
 
   return (
-    <div className="app">
+    <div className={`app ${screenShake}`}>
       <div className="container">
         {game.damageFlash && (
           <DamageFlash
@@ -465,6 +500,15 @@ useEffect(() => {
             clear={() => setGame((g) => ({ ...g, eventFlash: null }))}
           />
         )}
+
+       {showInitiativeReveal &&
+  game.revealedInitiative &&
+  (game.phase === "attack" || game.phase === "mulligan") && (
+  <InitiativeReveal
+    cards={game.revealedInitiative}
+    starterName={game.players[game.attacker].name}
+  />
+)}
 
         {game.pendingHandoff && (
           <Panel className="handoff">

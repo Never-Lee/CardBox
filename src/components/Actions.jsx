@@ -126,12 +126,22 @@ export function Actions({
               Vybraný blok stačí: <b>{blockCanStop ? "ano" : "ne"}</b>
             </p>
           </div>
-          <Button onClick={commitBlock} disabled={!blockCanStop || isAITurn}>
-            Blokovat — převzít iniciativu
-          </Button>
-          <Button onClick={passBlock} disabled={isAITurn} variant="danger">
-            Neblokovat — přijmout zásah
-          </Button>
+<Button
+  onClick={commitBlock}
+  disabled={!blockCanStop || isAITurn}
+  className="btn-block"
+>
+  Blokovat — převzít iniciativu
+</Button>
+
+<Button
+  onClick={passBlock}
+  disabled={isAITurn}
+  variant="danger"
+  className="btn-pass"
+>
+  Neblokovat — přijmout zásah
+</Button>
         </>
       )}
 
