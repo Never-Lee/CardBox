@@ -10,7 +10,7 @@ body {
   background:
     radial-gradient(circle at 50% 18%, rgba(220, 38, 38, 0.18), transparent 32%),
     linear-gradient(rgba(2, 6, 23, 0.66), rgba(2, 6, 23, 0.94)),
-    url("/backgrounds/boxing-gym-bg.png");
+    url("/backgrounds/menu-ring-bg.png");
   background-size: cover;
   background-position: center;
   background-attachment: scroll;
@@ -31,7 +31,7 @@ body::before {
 .app { min-height: 100vh; padding: 16px; background: transparent; }
 .container { max-width: 1400px; margin: 0 auto; display: grid; gap: 16px; }
 .narrow { max-width: 900px; }
-.menu { display: flex; align-items: center; justify-content: center; }
+.menu { display: flex; align-items: center; justify-content: center; padding-top: 4vh; }
 
 .menu-box {
   max-width: 560px;
@@ -39,9 +39,11 @@ body::before {
   text-align: center;
   display: grid;
   gap: 24px;
+  align-items: center;
+  justify-items: center;
 }
 
-.menu-box h1 {
+/*.menu-box h1 {
   font-size: clamp(48px, 8vw, 76px);
   line-height: 0.92;
   margin: 0;
@@ -55,7 +57,7 @@ body::before {
   color: rgba(248, 250, 252, 0.82);
   font-weight: 700;
   text-shadow: 0 3px 18px rgba(0, 0, 0, 0.75);
-}
+}*/
 
 .topbar {
   display: flex;
@@ -478,3 +480,32 @@ span.mini-card.black {
   width: 22px;
   height: 22px;
 }
+
+.menu-logo {
+  width: min(860px, 96vw);
+  height: auto;
+  display: block;
+  margin: 0 auto 12px;
+  filter:
+    drop-shadow(0 10px 30px rgba(0,0,0,.55))
+    drop-shadow(0 0 24px rgba(220,38,38,.18));
+}
+.menu {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.menu-box {
+  width: min(560px, 92vw);
+  margin-left: auto;
+  margin-right: auto;
+  justify-items: center;
+}
+
+.menu-logo {
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+

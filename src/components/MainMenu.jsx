@@ -4,8 +4,11 @@ export function MainMenu({ startGame, showRules }) {
   return (
     <div className="app menu">
       <div className="menu-box">
-        <h1>Karetní Box</h1>
-        <p>Duelová karetní hra o tempu, blocích, kombinacích a KO.</p>
+        <img
+  src="/ui/logo.png"
+  alt="Karetní Box"
+  className="menu-logo"
+/>
         <Panel>
           <Button onClick={() => startGame("hotseat")} className="wide">
             Hot-seat
