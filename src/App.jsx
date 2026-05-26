@@ -179,6 +179,13 @@ export default function App() {
   function toggleInitiative(card) {
     if (game.phase !== "initiative" || game.winner || game.pendingHandoff)
       return;
+
+    const usedInitiativeIds = new Set(
+  (game.revealedInitiative ?? []).map((card) => card.id),
+);
+
+if (usedInitiativeIds.has(card.id)) return;
+
     const picker = game.initiativePlayer ?? 0;
     if (game.viewingPlayer !== picker) return;
     setGame((g) => ({

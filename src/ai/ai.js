@@ -145,8 +145,14 @@ function bestBlockForCounterattack(game, blocks) {
   return cheapestBlock(blocks);
 }
 
-export function aiPickInitiativeCard(hand) {
-  return sortCards(hand)[0];
+export function aiPickInitiativeCard(hand, usedCards = []) {
+  const usedIds = new Set(usedCards.map((card) => card.id));
+
+  const availableCards = sortCards(
+    hand.filter((card) => !usedIds.has(card.id)),
+  );
+
+  return availableCards[0] ?? sortCards(hand)[0];
 }
 
 export function chooseAIMulligan(game) {

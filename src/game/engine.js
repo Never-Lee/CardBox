@@ -178,8 +178,11 @@ export function applyInitiativeSelection(game, pickedCard) {
     (card) => card.id === selectedInitiatives[0],
   );
   const secondCard = game.aiEnabled
-    ? aiPickInitiativeCard(game.players[AI_PLAYER].hand)
-    : game.players[1].hand.find((card) => card.id === selectedInitiatives[1]);
+  ? aiPickInitiativeCard(
+      game.players[AI_PLAYER].hand,
+      game.revealedInitiative ?? [],
+    )
+  : game.players[1].hand.find((card) => card.id === selectedInitiatives[1]);
 
   if (!firstCard || !secondCard) return game;
 
