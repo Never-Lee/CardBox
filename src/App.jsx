@@ -32,11 +32,6 @@ import finishSound from "./assets/sounds/finish.mp3";
 import jabSound from "./assets/sounds/jab.mp3";
 import koSound from "./assets/sounds/ko.mp3";
 import startSound from "./assets/sounds/start.mp3";
-function playSound(soundFile, volume = 0.7) {
-  const audio = new Audio(soundFile);
-  audio.volume = volume;
-  audio.play();
-}
 import { Actions } from "./components/Actions.jsx";
 import { Button } from "./components/Button.jsx";
 import { DamageFlash } from "./components/DamageFlash.jsx";
@@ -49,7 +44,20 @@ import { PlayerPanel } from "./components/PlayerPanel.jsx";
 import { RulesScreen } from "./components/RulesScreen.jsx";
 import { Status } from "./components/Status.jsx";
 
+const DEFAULT_SETTINGS = {
+  sound: true,
+  screenShake: true,
+  ambient: false,
+};
+
 export default function App() {
+  function playSound(soundFile, volume = 0.7) {
+  if (!settings.sound) return;
+  const audio = new Audio(soundFile);
+  audio.volume = volume;
+  audio.play();
+}
+  const [showSettings, setShowSettings] = useState(false);
   const [screen, setScreen] = useState("menu");
   const [gameMode, setGameMode] = useState("basic-ai");
   const [showLog, setShowLog] = useState(false);
@@ -58,6 +66,10 @@ export default function App() {
   const [lastInitiativeRevealKey, setLastInitiativeRevealKey] = useState(null);
   const [initiativeRevealKey, setInitiativeRevealKey] = useState(null);
   const [screenShake, setScreenShake] = useState("");
+  const [settings, setSettings] = useState(() => {
+  const saved = localStorage.getItem("cardbox-settings");
+  return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+});
 
   const attacker = game.players[game.attacker];
   const defender = game.players[game.defender];
@@ -387,6 +399,13 @@ export default function App() {
     return g;
   }
 
+  function toggleSetting(key) {
+  setSettings((current) => ({
+    ...current,
+    [key]: !current[key],
+  }));
+}
+
   useEffect(() => {
     if (!isAITurn) return;
     const timeout = setTimeout(
@@ -434,6 +453,8 @@ useEffect(() => {
 }, [game.damageFlash]);
 
 useEffect(() => {
+  if (!settings.screenShake) return;
+
   if (game.eventFlash?.type === "ko") {
     setScreenShake("shake-ko");
   } else if (game.damageFlash) {
@@ -448,6 +469,10 @@ useEffect(() => {
 
   return () => clearTimeout(timeout);
 }, [game.damageFlash, game.eventFlash]);
+
+useEffect(() => {
+  localStorage.setItem("cardbox-settings", JSON.stringify(settings));
+}, [settings]);
 
 useEffect(() => {
   if (!initiativeRevealKey) return;
@@ -547,6 +572,9 @@ useEffect(() => {
             <Button onClick={resetGame} variant="secondary">
               Nová hra
             </Button>
+            <Button onClick={() => setShowSettings(true)} variant="ghost">
+  Settings
+</Button>
           </div>
         </div>
 
@@ -557,6 +585,43 @@ useEffect(() => {
         {showLog && (
           <LogDrawer log={game.log} close={() => setShowLog(false)} />
         )}
+        
+        {showSettings && (
+  <Panel className="settings-panel">
+    <h2>Settings</h2>
+
+    <label className="setting-row">
+      <span>Zvuky</span>
+      <input
+        type="checkbox"
+        checked={settings.sound}
+        onChange={() => toggleSetting("sound")}
+      />
+    </label>
+
+    <label className="setting-row">
+      <span>Screen shake</span>
+      <input
+        type="checkbox"
+        checked={settings.screenShake}
+        onChange={() => toggleSetting("screenShake")}
+      />
+    </label>
+
+    <label className="setting-row">
+      <span>Ambient audio</span>
+      <input
+        type="checkbox"
+        checked={settings.ambient}
+        onChange={() => toggleSetting("ambient")}
+      />
+    </label>
+
+    <Button onClick={() => setShowSettings(false)} variant="secondary">
+      Zavřít
+    </Button>
+  </Panel>
+)}
 
         <div className="grid3">
           <Status game={game} />

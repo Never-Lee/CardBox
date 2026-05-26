@@ -455,3 +455,26 @@ span.mini-card.black {
 .shake-ko {
   animation: shake-ko 440ms ease-out;
 }
+
+.settings-panel {
+  position: fixed;
+  z-index: 70;
+  top: 80px;
+  right: 16px;
+  width: min(360px, calc(100vw - 32px));
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.16);
+  font-weight: 800;
+}
+
+.setting-row input {
+  width: 22px;
+  height: 22px;
+}
