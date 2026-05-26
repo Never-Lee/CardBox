@@ -11,6 +11,7 @@ export function EventFlash({ event, clear }) {
 
   const isKO = event.type === "ko";
   const isBlock = event.type === "block";
+  const isAttack = event.type === "attack";
 
   return (
     <div className={isKO ? "damage-flash event-flash-ko" : "damage-flash"}>
@@ -22,8 +23,14 @@ export function EventFlash({ event, clear }) {
       >
         <div className="damage-label">{isKO ? "💥" : "🥊🥊"}</div>
         <div className={`event-title ${isKO ? "event-title-ko" : ""}`}>
-          {isKO ? "KO!" : "BLOK!"}
-        </div>
+  {isKO
+    ? "KO!"
+    : isBlock
+      ? "BLOCK!"
+      : isAttack
+        ? event.text
+        : "EVENT"}
+</div>
         {event.text && <div className="event-text">{event.text}</div>}
       </motion.div>
     </div>

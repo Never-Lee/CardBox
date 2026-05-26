@@ -299,6 +299,17 @@ export function applyAttack(game, cards) {
       currentAttack: cards,
       selectedAttack: [],
       selectedBlock: null,
+      eventFlash: {
+  type: "attack",
+  text:
+    cards.length === 1
+      ? "JAB!"
+      : cards.length === 2
+        ? "HOOK!!"
+        : cards.length === 3
+          ? "CROSS!!!"
+          : "UPPERCUT!!!!",
+},
     },
     `${players[attacker].name} útočí: ${cards.map(cardLabel).join(" ")} — hrozí ${attackDamage(cards)} damage.`,
   );

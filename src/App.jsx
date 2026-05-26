@@ -415,10 +415,12 @@ if (usedInitiativeIds.has(card.id)) return;
 
   useEffect(() => {
     if (!isAITurn) return;
-    const timeout = setTimeout(
-      () => setGame((g) => finalizeTransition(g, runAIOnce(g))),
-      650,
-    );
+    const delay = game.phase === "block" ? 1250 : 650;
+
+const timeout = setTimeout(
+  () => setGame((g) => finalizeTransition(g, runAIOnce(g))),
+  delay,
+);
     return () => clearTimeout(timeout);
   }, [
     isAITurn,
